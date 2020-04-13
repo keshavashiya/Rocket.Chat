@@ -1,31 +1,31 @@
 <template name="accountTokens">
-	<section class="preferences-page preferences-page--new">
+	<section class="preferences-page preferences-page--new page-container page-home page-static page-settings">
 		{{> header sectionName="Personal_Access_Tokens" hideHelp=true fullpage=true}}
-		<div class="preferences-page__content">
-			{{# if isAllowed}}
-			<h2>{{_ "API_Personal_Access_Tokens_To_REST_API"}}</h2>
-			<br>
-			<form id="form-tokens" class="">
 
-				<div class="rc-form-group rc-form-group--inline">
-					<!-- <input id="input-token-name"
-					type="text"
-					name="tokenName"
-					placeholder={{_ "Enter_a_name"}}
-					value="{{tokenName}}"> -->
-					<div class="rc-input rc-input--small rc-directory-search rc-form-item-inline">
-						<label class="rc-input__label">
-							<div class="rc-input__wrapper">
-								<input type="text" class="rc-input__element rc-input__element--small js-search" name="tokenName" id="tokenName"
-								 placeholder={{_ "API_Add_Personal_Access_Token"}} autocomplete="off">
+		<div class="content">
+			{{# if isAllowed}}
+			<form id="form-tokens">
+				<div class="section-content border-component-color">
+					<div class="input-line double-col">
+						<label for="tokenName" class="setting-label">{{_ "API_Personal_Access_Tokens_To_REST_API"}}</label>
+						<div style="display: flex;">
+							<div class="setting-field" style="flex-grow: 1;">
+								<input type="text" class="rc-input__element js-search" name="tokenName" id="tokenName"
+									placeholder={{_ "API_Add_Personal_Access_Token"}} autocomplete="off" />
 							</div>
-						</label>
+							<div class="rc-select setting-field">
+								<select id="bypassTwoFactor" class="required rc-select__element">
+									<option value="false" selected dir="auto">{{_ "Require"}} ({{_ "Two Factor Authentication"}})</option>
+									<option value="true" dir="auto">{{_ "Ignore"}} ({{_ "Two Factor Authentication"}})</option>
+								</select>
+								{{> icon block="rc-select__arrow" icon="arrow-down"}}
+							</div>
+						</div>
+						<button name="add" class="rc-button rc-button--primary setting-action save-token">{{_ "Add"}}</button>
 					</div>
-					<button name="add" class="rc-button rc-button--primary rc-form-item-inline save-token">{{_ "Add"}}</button>
 				</div>
 			</form>
-			<br>
-			<div class="rc-table-content">
+
 				{{#table}}
 				<thead>
 					<tr>
@@ -37,6 +37,9 @@
 						</th>
 						<th>
 							<div class="table-fake-th">{{_ "Last_token_part"}}</div>
+						</th>
+						<th>
+							<div class="table-fake-th">{{_ "Two Factor Authentication"}}</div>
 						</th>
 						<th></th>
 					</tr>
@@ -51,6 +54,7 @@
 						</td>
 						<td>{{dateFormated createdAt}}</td>
 						<td>...{{lastTokenPart}}</td>
+						<td>{{twoFactor bypassTwoFactor}}</td>
 						<td><button class="regenerate-personal-access-token"><i class="icon-ccw"></i></button></td>
 						<td><button class="remove-personal-access-token"><i class="icon-block"></i></button></td>
 					</tr>
@@ -61,7 +65,6 @@
 					{{/each}}
 				</tbody>
 				{{/table}}
-			</div>
 			{{/if}}
 		</div>
 	</section>
