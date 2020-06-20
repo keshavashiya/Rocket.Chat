@@ -31,6 +31,7 @@ const sortUsers = function(field, direction) {
 		case 'email':
 			return {
 				'emails.address': direction === 'asc' ? 1 : -1,
+				username: direction === 'asc' ? 1 : -1,
 			};
 		default:
 			return {
@@ -128,6 +129,7 @@ Meteor.methods({
 				createdAt: 1,
 				emails: 1,
 				federation: 1,
+				avatarETag: 1,
 			},
 		};
 
