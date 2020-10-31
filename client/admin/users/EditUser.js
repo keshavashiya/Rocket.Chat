@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Box, Field, Margins, Button } from '@rocket.chat/fuselage';
+import { Box, Field, Margins, Button, Callout } from '@rocket.chat/fuselage';
 
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useEndpointDataExperimental, ENDPOINT_STATES } from '../../hooks/useEndpointDataExperimental';
@@ -21,7 +21,7 @@ export function EditUserWithData({ uid, ...props }) {
 	}
 
 	if (error || roleError) {
-		return <Box mbs='x16' {...props}>{t('User_not_found')}</Box>;
+		return <Callout m='x16' type='danger'>{t('User_not_found')}</Callout>;
 	}
 
 	return <EditUser data={data.user} roles={roleData.roles} {...props}/>;
@@ -34,11 +34,13 @@ const getInitialValue = (data) => ({
 	username: data.username,
 	status: data.status,
 	bio: data.bio ?? '',
+	nickname: data.nickname ?? '',
 	email: (data.emails && data.emails[0].address) || '',
 	verified: (data.emails && data.emails[0].verified) || false,
 	setRandomPassword: false,
 	requirePasswordChange: data.setRandomPassword || false,
 	customFields: data.customFields ?? {},
+	statusText: data.statusText ?? '',
 });
 
 export function EditUser({ data, roles, ...props }) {
@@ -58,14 +60,12 @@ export function EditUser({ data, roles, ...props }) {
 	const saveQuery = useMemo(() => ({
 		userId: data._id,
 		data: values,
-		// TODO: remove JSON.stringify. Is used to keep useEndpointAction from rerendering the page indefinitely.
-	}), [data._id, JSON.stringify(values)]);
+	}), [data._id, values]);
 
 	const saveAvatarQuery = useMemo(() => ({
 		userId: data._id,
 		avatarUrl: avatarObj && avatarObj.avatarUrl,
-		// TODO: remove JSON.stringify. Is used to keep useEndpointAction from rerendering the page indefinitely.
-	}), [data._id, JSON.stringify(avatarObj)]);
+	}), [data._id, avatarObj]);
 
 	const resetAvatarQuery = useMemo(() => ({
 		userId: data._id,
@@ -83,8 +83,9 @@ export function EditUser({ data, roles, ...props }) {
 		if (avatarObj.avatarUrl) {
 			return saveAvatarUrlAction();
 		}
+		avatarObj.set('userId', data._id);
 		return saveAvatarAction(avatarObj);
-	}, [avatarObj, resetAvatarAction, saveAvatarAction, saveAvatarUrlAction]);
+	}, [avatarObj, resetAvatarAction, saveAvatarAction, saveAvatarUrlAction, data._id]);
 
 	const handleSave = useCallback(async () => {
 		const result = await saveAction();
@@ -98,18 +99,20 @@ export function EditUser({ data, roles, ...props }) {
 
 	const availableRoles = roles.map(({ _id, description }) => [_id, description || _id]);
 
-	const prepend = useMemo(() => <UserAvatarEditor username={data.username} setAvatarObj={setAvatarObj}/>, [data.username]);
+	const canSaveOrReset = hasUnsavedChanges || avatarObj;
+
+	const prepend = useMemo(() => <UserAvatarEditor username={data.username} etag={data.avatarETag} setAvatarObj={setAvatarObj}/>, [data.username, data.avatarETag]);
 
 	const append = useMemo(() => <Field>
 		<Field.Row>
 			<Box display='flex' flexDirection='row' justifyContent='space-between' w='full'>
 				<Margins inlineEnd='x4'>
-					<Button flexGrow={1} type='reset' disabled={!hasUnsavedChanges} onClick={reset}>{t('Reset')}</Button>
-					<Button mie='none' flexGrow={1} disabled={!hasUnsavedChanges} onClick={handleSave}>{t('Save')}</Button>
+					<Button flexGrow={1} type='reset' disabled={!canSaveOrReset} onClick={reset}>{t('Reset')}</Button>
+					<Button mie='none' flexGrow={1} disabled={!canSaveOrReset} onClick={handleSave}>{t('Save')}</Button>
 				</Margins>
 			</Box>
 		</Field.Row>
-	</Field>, [handleSave, hasUnsavedChanges, reset, t]);
+	</Field>, [handleSave, canSaveOrReset, reset, t]);
 
 	return <UserForm formValues={values} formHandlers={handlers} availableRoles={availableRoles} prepend={prepend} append={append} {...props}/>;
 }

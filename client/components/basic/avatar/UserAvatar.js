@@ -1,9 +1,12 @@
-import React from 'react';
-import { Avatar } from '@rocket.chat/fuselage';
+import React, { memo } from 'react';
 
-function UserAvatar({ url, username, ...props }) {
-	const avatarUrl = url || `/avatar/${ username }`;
-	return <Avatar url={avatarUrl} title={username} {...props}/>;
+import BaseAvatar from './BaseAvatar';
+import { useUserAvatarPath } from '../../../contexts/AvatarUrlContext';
+
+function UserAvatar({ username, etag, ...rest }) {
+	const getUserAvatarPath = useUserAvatarPath();
+	const { url = getUserAvatarPath(username, etag), ...props } = rest;
+	return <BaseAvatar url={url} title={username} {...props}/>;
 }
 
-export default UserAvatar;
+export default memo(UserAvatar);

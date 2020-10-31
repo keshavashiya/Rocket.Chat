@@ -148,7 +148,6 @@ export function getEmailData({
 		? receiver.name || receiver.username
 		: receiver.username;
 
-	const [senderEmail] = sender.emails;
 	const email = {
 		from: generateNameEmail(username, settings.get('From_Email')),
 		to: generateNameEmail(receiverName, emailAddress),
@@ -157,10 +156,13 @@ export function getEmailData({
 		data: {
 			room_path,
 		},
-		headers: {
-			'Reply-To': generateNameEmail(username, senderEmail.address),
-		},
+		headers: {},
 	};
+
+	if (sender.emails?.length > 0) {
+		const [senderEmail] = sender.emails;
+		email.headers['Reply-To'] = generateNameEmail(username, senderEmail.address);
+	}
 
 	// If direct reply enabled, email content with headers
 	if (settings.get('Direct_Reply_Enable')) {
@@ -192,6 +194,7 @@ export function shouldNotifyEmail({
 	hasMentionToAll,
 	hasReplyToThread,
 	roomType,
+	isThread,
 }) {
 	// email notifications are disabled globally
 	if (!settings.get('Accounts_AllowEmailNotifications')) {
@@ -220,5 +223,5 @@ export function shouldNotifyEmail({
 		}
 	}
 
-	return roomType === 'd' || isHighlighted || emailNotifications === 'all' || hasMentionToUser || hasReplyToThread || (!disableAllMessageNotifications && hasMentionToAll);
+	return (roomType === 'd' || isHighlighted || emailNotifications === 'all' || hasMentionToUser || (!disableAllMessageNotifications && hasMentionToAll)) && (!isThread || hasReplyToThread);
 }

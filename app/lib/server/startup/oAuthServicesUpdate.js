@@ -51,7 +51,11 @@ function _OAuthServicesUpdate() {
 				data.nameField = settings.get(`${ service.key }-name_field`);
 				data.avatarField = settings.get(`${ service.key }-avatar_field`);
 				data.rolesClaim = settings.get(`${ service.key }-roles_claim`);
+				data.groupsClaim = settings.get(`${ service.key }-groups_claim`);
+				data.channelsMap = settings.get(`${ service.key }-groups_channel_map`);
+				data.channelsAdmin = settings.get(`${ service.key }-channels_admin`);
 				data.mergeUsers = settings.get(`${ service.key }-merge_users`);
+				data.mapChannels = settings.get(`${ service.key }-map_channels`);
 				data.mergeRoles = settings.get(`${ service.key }-merge_roles`);
 				data.showButton = settings.get(`${ service.key }-show_button`);
 				new CustomOAuth(serviceName.toLowerCase(), {
@@ -68,6 +72,10 @@ function _OAuthServicesUpdate() {
 					nameField: data.nameField,
 					avatarField: data.avatarField,
 					rolesClaim: data.rolesClaim,
+					groupsClaim: data.groupsClaim,
+					mapChannels: data.mapChannels,
+					channelsMap: data.channelsMap,
+					channelsAdmin: data.channelsAdmin,
 					mergeUsers: data.mergeUsers,
 					mergeRoles: data.mergeRoles,
 					accessTokenParam: data.accessTokenParam,
@@ -93,6 +101,12 @@ function _OAuthServicesUpdate() {
 				data.buttonLabelText = settings.get('Accounts_OAuth_Nextcloud_button_label_text');
 				data.buttonLabelColor = settings.get('Accounts_OAuth_Nextcloud_button_label_color');
 				data.buttonColor = settings.get('Accounts_OAuth_Nextcloud_button_color');
+			}
+
+			// If there's no data other than the service name, then put the service name in the data object so the operation won't fail
+			const keys = Object.keys(data).filter((key) => data[key] !== undefined);
+			if (!keys.length) {
+				data.service = serviceName.toLowerCase();
 			}
 
 			ServiceConfiguration.configurations.upsert({
@@ -126,3 +140,15 @@ settings.get(/^Accounts_OAuth_Custom-[a-z0-9_]+/, function(key, value) {
 		return OAuthServicesRemove(key);// eslint-disable-line new-cap
 	}
 });
+
+function customOAuthServicesInit() {
+	// Add settings for custom OAuth providers to the settings so they get
+	// automatically added when they are defined in ENV variables
+	Object.keys(process.env).forEach((key) => {
+		if (/Accounts_OAuth_Custom-[a-zA-Z0-9_-]+$/.test(key)) {
+			settings.add(key, process.env[key]);
+		}
+	});
+}
+
+customOAuthServicesInit();

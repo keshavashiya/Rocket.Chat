@@ -28,9 +28,16 @@ export class Users extends Base {
 	constructor(...args) {
 		super(...args);
 
+		this.defaultFields = {
+			__rooms: 0,
+		};
+
+		this.tryEnsureIndex({ __rooms: 1 }, { sparse: 1 });
+
 		this.tryEnsureIndex({ roles: 1 }, { sparse: 1 });
 		this.tryEnsureIndex({ name: 1 });
-		this.tryEnsureIndex({ bio: 1 });
+		this.tryEnsureIndex({ bio: 1 }, { sparse: 1 });
+		this.tryEnsureIndex({ nickname: 1 }, { sparse: 1 });
 		this.tryEnsureIndex({ createdAt: 1 });
 		this.tryEnsureIndex({ lastLogin: 1 });
 		this.tryEnsureIndex({ status: 1 });
@@ -43,6 +50,8 @@ export class Users extends Base {
 		this.tryEnsureIndex({ federation: 1 }, { sparse: true });
 		this.tryEnsureIndex({ isRemote: 1 }, { sparse: true });
 		this.tryEnsureIndex({ 'services.saml.inResponseTo': 1 });
+		this.tryEnsureIndex({ openBusinessHours: 1 }, { sparse: true });
+		this.tryEnsureIndex({ statusLivechat: 1 }, { sparse: true });
 	}
 
 	getLoginTokensByUserId(userId) {
@@ -386,6 +395,48 @@ export class Users extends Base {
 		});
 	}
 
+	addRoomByUserId(_id, rid) {
+		return this.update({
+			_id,
+			__rooms: { $ne: rid },
+		}, {
+			$addToSet: { __rooms: rid },
+		});
+	}
+
+	removeRoomByUserId(_id, rid) {
+		return this.update({
+			_id,
+			__rooms: rid,
+		}, {
+			$pull: { __rooms: rid },
+		});
+	}
+
+	removeAllRoomsByUserId(_id) {
+		return this.update({
+			_id,
+		}, {
+			$set: { __rooms: [] },
+		});
+	}
+
+	removeRoomByRoomId(rid) {
+		return this.update({
+			__rooms: rid,
+		}, {
+			$pull: { __rooms: rid },
+		}, { multi: true });
+	}
+
+	removeRoomByRoomIds(rids) {
+		return this.update({
+			__rooms: { $in: rids },
+		}, {
+			$pullAll: { __rooms: rids },
+		}, { multi: true });
+	}
+
 	update2FABackupCodesByUserId(userId, backupCodes) {
 		return this.update({
 			_id: userId,
@@ -507,6 +558,19 @@ export class Users extends Base {
 		return this.findOne(query, options);
 	}
 
+	findOneByUsernameAndRoomIgnoringCase(username, rid, options) {
+		if (typeof username === 'string') {
+			username = new RegExp(`^${ s.escapeRegExp(username) }$`, 'i');
+		}
+
+		const query = {
+			__rooms: rid,
+			username,
+		};
+
+		return this.findOne(query, options);
+	}
+
 	findOneByUsernameAndServiceNameIgnoringCase(username, userId, serviceName, options) {
 		if (typeof username === 'string') {
 			username = new RegExp(`^${ s.escapeRegExp(username) }$`, 'i');
@@ -544,7 +608,7 @@ export class Users extends Base {
 		return this.findOne(query, options);
 	}
 
-	findOneById(userId, options) {
+	findOneById(userId, options = {}) {
 		const query = { _id: userId };
 
 		return this.findOne(query, options);
@@ -659,7 +723,7 @@ export class Users extends Base {
 		return this.find(query, options);
 	}
 
-	findByActiveUsersExcept(searchTerm, exceptions, options, forcedSearchFields, extraQuery = []) {
+	findByActiveUsersExcept(searchTerm, exceptions, options, forcedSearchFields, extraQuery = [], { startsWith = false, endsWith = false } = {}) {
 		if (exceptions == null) { exceptions = []; }
 		if (options == null) { options = {}; }
 		if (!_.isArray(exceptions)) {
@@ -681,7 +745,7 @@ export class Users extends Base {
 			return this._db.find(query, options);
 		}
 
-		const termRegex = new RegExp(s.escapeRegExp(searchTerm), 'i');
+		const termRegex = new RegExp((startsWith ? '^' : '') + s.escapeRegExp(searchTerm) + (endsWith ? '$' : ''), 'i');
 
 		const searchFields = forcedSearchFields || settings.get('Accounts_SearchFields').trim().split(',');
 
@@ -771,13 +835,11 @@ export class Users extends Base {
 		return this.find(query, options);
 	}
 
-	getLastLogin(options) {
-		if (options == null) { options = {}; }
-		const query = { lastLogin: { $exists: 1 } };
+	getLastLogin(options = { fields: { _id: 0, lastLogin: 1 } }) {
 		options.sort = { lastLogin: -1 };
 		options.limit = 1;
-		const [user] = this.find(query, options).fetch();
-		return user && user.lastLogin;
+		const [user] = this.find({}, options).fetch();
+		return user?.lastLogin;
 	}
 
 	findUsersByUsernames(usernames, options) {
@@ -1144,6 +1206,21 @@ export class Users extends Base {
 			} : {
 				$unset: {
 					bio: 1,
+				},
+			},
+		};
+		return this.update(_id, update);
+	}
+
+	setNickname(_id, nickname = '') {
+		const update = {
+			...nickname.trim() ? {
+				$set: {
+					nickname,
+				},
+			} : {
+				$unset: {
+					nickname: 1,
 				},
 			},
 		};

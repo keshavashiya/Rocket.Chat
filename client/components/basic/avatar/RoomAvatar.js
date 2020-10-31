@@ -1,12 +1,12 @@
-import React from 'react';
-import { Avatar } from '@rocket.chat/fuselage';
+import React, { memo } from 'react';
 
-import { roomTypes } from '../../../../app/utils/client';
+import BaseAvatar from './BaseAvatar';
+import { useRoomAvatarPath } from '../../../contexts/AvatarUrlContext';
 
-function RoomAvatar({ room: { type, ...room }, ...props }) {
-	const avatarUrl = roomTypes.getConfig(type).getAvatarPath({ type, ...room });
-
-	return <Avatar url={avatarUrl} title={avatarUrl} {...props}/>;
+function RoomAvatar({ room, ...rest }) {
+	const getRoomPathAvatar = useRoomAvatarPath();
+	const { url = getRoomPathAvatar(room), ...props } = rest;
+	return <BaseAvatar url={url} {...props}/>;
 }
 
-export default RoomAvatar;
+export default memo(RoomAvatar);

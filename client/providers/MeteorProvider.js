@@ -1,20 +1,22 @@
 import React from 'react';
 
-import { AuthorizationProvider } from './AuthorizationProvider';
-import { ConnectionStatusProvider } from './ConnectionStatusProvider';
-import { RouterProvider } from './RouterProvider';
-import { SessionProvider } from './SessionProvider';
-import SettingsProvider from './SettingsProvider';
-import { ServerProvider } from './ServerProvider';
-import { SidebarProvider } from './SidebarProvider';
-import { TranslationProvider } from './TranslationProvider';
-import { ToastMessagesProvider } from './ToastMessagesProvider';
-import { UserProvider } from './UserProvider';
-import { AvatarUrlProvider } from './AvatarUrlProvider';
-import { CustomSoundProvider } from './CustomSoundProvides';
+import AuthorizationProvider from './AuthorizationProvider';
+import AvatarUrlProvider from './AvatarUrlProvider';
+import ConnectionStatusProvider from './ConnectionStatusProvider';
+import CustomSoundProvider from './CustomSoundProvider';
 import ModalProvider from './ModalProvider';
+import OmniChannelProvider from './OmniChannelProvider';
+import RouterProvider from './RouterProvider';
+import ServerProvider from './ServerProvider';
+import SessionProvider from './SessionProvider';
+import SettingsProvider from './SettingsProvider';
+import SidebarProvider from './SidebarProvider';
+import ToastMessagesProvider from './ToastMessagesProvider';
+import TranslationProvider from './TranslationProvider';
+import UserProvider from './UserProvider';
 
-export function MeteorProvider({ children }) {
+
+function MeteorProvider({ children }) {
 	return <ConnectionStatusProvider>
 		<ServerProvider>
 			<RouterProvider>
@@ -22,19 +24,21 @@ export function MeteorProvider({ children }) {
 					<SessionProvider>
 						<SidebarProvider>
 							<ToastMessagesProvider>
-								<ModalProvider>
-									<SettingsProvider>
+								<SettingsProvider>
+									<AvatarUrlProvider>
 										<CustomSoundProvider>
-											<AvatarUrlProvider>
-												<UserProvider>
-													<AuthorizationProvider>
-														{children}
-													</AuthorizationProvider>
-												</UserProvider>
-											</AvatarUrlProvider>
+											<UserProvider>
+												<AuthorizationProvider>
+													<OmniChannelProvider>
+														<ModalProvider>
+															{children}
+														</ModalProvider>
+													</OmniChannelProvider>
+												</AuthorizationProvider>
+											</UserProvider>
 										</CustomSoundProvider>
-									</SettingsProvider>
-								</ModalProvider>
+									</AvatarUrlProvider>
+								</SettingsProvider>
 							</ToastMessagesProvider>
 						</SidebarProvider>
 					</SessionProvider>

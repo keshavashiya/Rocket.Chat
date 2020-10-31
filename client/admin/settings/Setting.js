@@ -30,6 +30,7 @@ export const MemoizedSetting = memo(function MemoizedSetting({
 	editor,
 	onChangeValue = () => {},
 	onChangeEditor = () => {},
+	className,
 	...inputProps
 }) {
 	const InputComponent = {
@@ -49,7 +50,7 @@ export const MemoizedSetting = memo(function MemoizedSetting({
 		roomPick: RoomPickSettingInput,
 	}[type] || GenericSettingInput;
 
-	return <Field>
+	return <Field className={className}>
 		<InputComponent
 			value={value}
 			editor={editor}
@@ -64,7 +65,7 @@ export const MemoizedSetting = memo(function MemoizedSetting({
 	</Field>;
 });
 
-export function Setting({ settingId, sectionChanged }) {
+export function Setting({ className, settingId, sectionChanged }) {
 	const setting = useEditableSetting(settingId);
 
 	const persistedSetting = useSettingStructure(settingId);
@@ -131,11 +132,12 @@ export function Setting({ settingId, sectionChanged }) {
 	} = setting;
 
 	const label = (i18nLabel && t(i18nLabel)) || (_id || t(_id));
-	const hint = useMemo(() => t.has(i18nDescription) && <MarkdownText content={t(i18nDescription)} />, [i18nDescription, t]);
+	const hint = useMemo(() => t.has(i18nDescription) && <MarkdownText preserveHtml={true} content={t(i18nDescription)} />, [i18nDescription, t]);
 	const callout = useMemo(() => alert && <span dangerouslySetInnerHTML={{ __html: t(alert) }} />, [alert, t]);
 	const hasResetButton = !disableReset && !readonly && type !== 'asset' && (JSON.stringify(packageEditor) !== JSON.stringify(editor) || JSON.stringify(value) !== JSON.stringify(packageValue)) && !disabled;
 
 	return <MemoizedSetting
+		className={className}
 		type={type}
 		label={label}
 		hint={hint}
